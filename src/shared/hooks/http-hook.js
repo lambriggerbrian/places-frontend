@@ -23,6 +23,7 @@ export const useHttpClient = () => {
           (abortController) => abortController !== httpAbortController
         );
         const responseData = await response.json();
+        setIsLoading(false);
         if (!response.ok) {
           console.log(responseData);
           throw new Error(responseData.message);
