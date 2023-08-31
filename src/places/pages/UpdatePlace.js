@@ -1,42 +1,28 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom/cjs/react-router-dom.min";
+import React, { useContext, useEffect, useState } from "react";
+import { useParams, useHistory } from "react-router-dom";
 
-import "./PlaceForm.css";
+import Button from "../../shared/components/FormElements/Button";
 import Input from "../../shared/components/FormElements/Input";
+import { useForm } from "../../shared/hooks/form-hook";
+import { useHttpClient } from "../../shared/hooks/http-hook";
 import {
   VALIDATOR_MINLENGTH,
   VALIDATOR_REQUIRE,
 } from "../../shared/util/validators";
-import Button from "../../shared/components/FormElements/Button";
-import { useForm } from "../../shared/hooks/form-hook";
-import Card from "../../shared/components/UIElements/Card";
+import "./PlaceForm.css";
+import LoadingSpinner from "../../shared/components/UIElements/LoadingSpinner";
+import ErrorModal from "../../shared/components/UIElements/ErrorModal";
+import { AuthContext } from "../../shared/context/auth-context";
 
-const DUMMY_PLACES = [
-  {
-    id: "p1",
-    title: "testTitle",
-    description: "testDescription",
-    imageUrl:
-      "https://44.media.tumblr.com/861e92925735e9f700eb2f236ae6c435/tumblr_ol3bsnt8rg1vni15go1_400.gif",
-    address: "testAddress",
-    creator: "u1",
-    location: { lat: 30, lng: -97 },
-  },
-  {
-    id: "p2",
-    title: "testTitle",
-    description: "testDescription",
-    imageUrl:
-      "https://44.media.tumblr.com/861e92925735e9f700eb2f236ae6c435/tumblr_ol3bsnt8rg1vni15go1_400.gif",
-    address: "testAddress",
-    creator: "u2",
-    location: { lat: 30, lng: -97 },
-  },
-];
+const GET_PLACE_URL = `${process.env.REACT_APP_BACKEND_TARGET}/api/places`;
+const PATCH_PLACE_URL = `${process.env.REACT_APP_BACKEND_TARGET}/api/places`;
 
 const UpdatePlace = (props) => {
   const placeId = useParams().placeId;
-  const [isLoading, setIsLoading] = useState(true);
+  const history = useHistory();
+  const auth = useContext(AuthContext);
+  const [place, setPlace] = useState();
+  const { isLoading, hasError, sendRequest, clearError } = useHttpClient();
 
   const [formState, inputHandler, setFormData] = useForm(
     {
@@ -45,72 +31,89 @@ const UpdatePlace = (props) => {
     },
     false
   );
-  const updateSubmitHandler = (event) => {
-    event.preventDefault();
-
-    console.log(formState.inputs);
-  };
-
-  const selectedPlace = DUMMY_PLACES.find((place) => place.id === placeId);
 
   useEffect(() => {
-    if (selectedPlace) {
-      setFormData(
+    const getPlace = async () => {
+      const getPlaceIdUrl = `${GET_PLACE_URL}/${placeId}`;
+      try {
+        const responseData = await sendRequest(getPlaceIdUrl);
+        setPlace(responseData.place);
+        setFormData(
+          {
+            title: { value: responseData.place.title, isValid: true },
+            description: {
+              value: responseData.place.description,
+              isValid: true,
+            },
+          },
+          true
+        );
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getPlace();
+  }, [placeId, sendRequest, setFormData]);
+
+  const updateSubmitHandler = async (event) => {
+    event.preventDefault();
+    const patchPlaceIdUrl = `${PATCH_PLACE_URL}/${placeId}`;
+    try {
+      await sendRequest(
+        patchPlaceIdUrl,
+        "PATCH",
+        JSON.stringify({
+          title: formState.inputs.title.value,
+          description: formState.inputs.description.value,
+        }),
         {
-          title: { value: selectedPlace.title, isValid: true },
-          description: { value: selectedPlace.description, isValid: true },
-        },
-        true
+          "Content-Type": "application/json",
+        }
       );
+      history.push(`/${auth.userId}/places`);
+    } catch (error) {
+      console.log(error);
     }
-    setIsLoading(false);
-  }, [selectedPlace, setFormData, setIsLoading]);
+  };
 
-  if (!selectedPlace) {
+  if (!place) {
     return (
       <div className="center">
-        <Card>
-          <h2>Could not find place!</h2>
-        </Card>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="center">
-        <h2>Loading...</h2>
+        <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <form className="place-form" onSubmit={updateSubmitHandler}>
-      <Input
-        id="title"
-        element="input"
-        type="text"
-        label="Title"
-        validators={[VALIDATOR_REQUIRE(), VALIDATOR_MINLENGTH(5)]}
-        errorText="Please enter a valid title. (Min 5 characters)"
-        onInput={inputHandler}
-        value={formState.inputs.title.value}
-        isValid={formState.inputs.title.isValid}
-      />
-      <Input
-        id="description"
-        element="textarea"
-        label="Description"
-        validators={[VALIDATOR_MINLENGTH(5)]}
-        errorText="Please enter a description. (Min 5 characters)"
-        onInput={inputHandler}
-        value={formState.inputs.description.value}
-        isValid={formState.inputs.description.isValid}
-      />
-      <Button type="submit" disabled={!formState.isValid}>
-        UPDATE PLACE
-      </Button>
-    </form>
+    <React.Fragment>
+      <ErrorModal error={hasError} clearError={clearError} />
+      <form className="place-form" onSubmit={updateSubmitHandler}>
+        <Input
+          id="title"
+          element="input"
+          type="text"
+          label="Title"
+          validators={[VALIDATOR_REQUIRE(), VALIDATOR_MINLENGTH(5)]}
+          errorText="Please enter a valid title. (Min 5 characters)"
+          onInput={inputHandler}
+          value={place.title}
+          isValid={true}
+        />
+        <Input
+          id="description"
+          element="textarea"
+          label="Description"
+          validators={[VALIDATOR_MINLENGTH(5)]}
+          errorText="Please enter a description. (Min 5 characters)"
+          onInput={inputHandler}
+          value={place.description}
+          isValid={true}
+        />
+        <Button type="submit" disabled={isLoading}>
+          UPDATE PLACE
+        </Button>
+      </form>
+    </React.Fragment>
   );
 };
 

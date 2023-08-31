@@ -14,6 +14,7 @@ import LoadingSpinner from "../../shared/components/UIElements/LoadingSpinner";
 import ErrorModal from "../../shared/components/UIElements/ErrorModal";
 import { AuthContext } from "../../shared/context/auth-context";
 import { useHttpClient } from "../../shared/hooks/http-hook";
+import ImageUpload from "../../shared/components/FormElements/ImageUpload";
 
 const SIGNUP_URL = `${process.env.REACT_APP_BACKEND_TARGET}/api/users/signup`;
 const LOGIN_URL = `${process.env.REACT_APP_BACKEND_TARGET}/api/users/login`;
@@ -35,7 +36,7 @@ const Auth = () => {
 
     if (isLoginMode) {
       try {
-        await sendRequest(
+        const responseData = await sendRequest(
           LOGIN_URL,
           "POST",
           JSON.stringify({
@@ -46,7 +47,7 @@ const Auth = () => {
             "Content-Type": "application/json",
           }
         );
-        auth.login();
+        auth.login(responseData.userId);
       } catch (error) {
         console.log(error);
       }
@@ -77,6 +78,7 @@ const Auth = () => {
         {
           ...formState.inputs,
           name: undefined,
+          image: undefined,
         },
         formState.inputs.email.isValid && formState.inputs.password.isValid
       );
@@ -86,6 +88,10 @@ const Auth = () => {
           ...formState.inputs,
           name: {
             value: "",
+            isValid: false,
+          },
+          image: {
+            value: null,
             isValid: false,
           },
         },
@@ -134,6 +140,9 @@ const Auth = () => {
             value={formState.inputs.password.value}
             onInput={inputHandler}
           ></Input>
+          {!isLoginMode && (
+            <ImageUpload center id="image" onInput={inputHandler} />
+          )}
           <Button type="submit" disabled={!formState.isValid}>
             {isLoginMode ? "LOGIN" : "SIGNUP"}
           </Button>
