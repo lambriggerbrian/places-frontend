@@ -47,25 +47,22 @@ const Auth = () => {
             "Content-Type": "application/json",
           }
         );
-        auth.login(responseData.userId);
+        const { userId, token } = responseData;
+        auth.login(userId, token);
       } catch (error) {
         console.log(error);
       }
     } else {
       try {
-        await sendRequest(
-          SIGNUP_URL,
-          "POST",
-          JSON.stringify({
-            name: formState.inputs.name.value,
-            email: formState.inputs.email.value,
-            password: formState.inputs.password.value,
-          }),
-          {
-            "Content-Type": "application/json",
-          }
-        );
-        auth.login();
+        const formData = new FormData();
+        formData.append("name", formState.inputs.name.value);
+        formData.append("email", formState.inputs.email.value);
+        formData.append("password", formState.inputs.password.value);
+        formData.append("image", formState.inputs.image.value);
+
+        const responseData = await sendRequest(SIGNUP_URL, "POST", formData);
+        const { userId, token } = responseData;
+        auth.login(userId, token);
       } catch (error) {
         console.log(error);
       }
@@ -141,7 +138,12 @@ const Auth = () => {
             onInput={inputHandler}
           ></Input>
           {!isLoginMode && (
-            <ImageUpload center id="image" onInput={inputHandler} />
+            <ImageUpload
+              center
+              id="image"
+              onInput={inputHandler}
+              errorText="Please provide an image"
+            />
           )}
           <Button type="submit" disabled={!formState.isValid}>
             {isLoginMode ? "LOGIN" : "SIGNUP"}

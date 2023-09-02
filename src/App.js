@@ -14,21 +14,21 @@ import Auth from "./users/pages/Auth";
 import { AuthContext } from "./shared/context/auth-context";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userId, setUserId] = useState();
+  const [token, setToken] = useState();
 
-  const login = useCallback((userId) => {
-    setIsLoggedIn(true);
+  const login = useCallback((userId, token) => {
     setUserId(userId);
+    setToken(token);
   }, []);
   const logout = useCallback(() => {
-    setIsLoggedIn(false);
     setUserId(null);
+    setToken(false);
   }, []);
 
   let routes;
 
-  if (isLoggedIn) {
+  if (token) {
     routes = (
       <Switch>
         <Route path="/" exact>
@@ -64,7 +64,9 @@ function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, userId, login, logout }}>
+    <AuthContext.Provider
+      value={{ isLoggedIn: !!token, userId, token, login, logout }}
+    >
       <Router>
         <MainNavigation />
         <main>{routes}</main>

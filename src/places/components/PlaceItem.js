@@ -29,7 +29,9 @@ const PlaceItem = (props) => {
     closeDeleteHandler();
     const deletePlaceIdUrl = `${DELETE_PLACE_URL}/${props.id}`;
     try {
-      await sendRequest(deletePlaceIdUrl, "DELETE");
+      await sendRequest(deletePlaceIdUrl, "DELETE", null, {
+        Authorization: `Bearer ${auth.token}`,
+      });
       props.onDelete(props.id);
     } catch (error) {
       console.log(error);
@@ -76,7 +78,10 @@ const PlaceItem = (props) => {
         <Card>
           {isLoading && <LoadingSpinner />}
           <div className="place-item__image">
-            <img src={props.image} alt={props.title} />
+            <img
+              src={`${process.env.REACT_APP_BACKEND_TARGET}/${props.image}`}
+              alt={props.title}
+            />
           </div>
           <div className="place-item__info">
             <h2>{props.title}</h2>

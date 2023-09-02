@@ -18,9 +18,9 @@ const GET_PLACE_URL = `${process.env.REACT_APP_BACKEND_TARGET}/api/places`;
 const PATCH_PLACE_URL = `${process.env.REACT_APP_BACKEND_TARGET}/api/places`;
 
 const UpdatePlace = (props) => {
+  const auth = useContext(AuthContext);
   const placeId = useParams().placeId;
   const history = useHistory();
-  const auth = useContext(AuthContext);
   const [place, setPlace] = useState();
   const { isLoading, hasError, sendRequest, clearError } = useHttpClient();
 
@@ -67,6 +67,7 @@ const UpdatePlace = (props) => {
           description: formState.inputs.description.value,
         }),
         {
+          Authorization: `Bearer ${auth.token}`,
           "Content-Type": "application/json",
         }
       );
