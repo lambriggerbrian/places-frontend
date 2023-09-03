@@ -47,8 +47,8 @@ const Auth = () => {
             "Content-Type": "application/json",
           }
         );
-        const { userId, token } = responseData;
-        auth.login(userId, token);
+        const { userId, token, expireDate } = responseData;
+        auth.login(userId, token, expireDate);
       } catch (error) {
         console.log(error);
       }
@@ -61,8 +61,8 @@ const Auth = () => {
         formData.append("image", formState.inputs.image.value);
 
         const responseData = await sendRequest(SIGNUP_URL, "POST", formData);
-        const { userId, token } = responseData;
-        auth.login(userId, token);
+        const { userId, token, expireDate } = responseData;
+        auth.login(userId, token, expireDate);
       } catch (error) {
         console.log(error);
       }

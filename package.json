@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "A React App frontend for the Places App MERN stack.",
   "dependencies": {
+    "dayjs": "^1.11.9",
     "react": "^16.11.0",
     "react-dom": "^16.11.0",
     "react-router-dom": "5.3.4",
